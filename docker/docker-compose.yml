@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  # Placeholder services — to be expanded later
+  backend:
+    image: node:18
+    command: "echo backend placeholder"
+  frontend:
+    image: node:18
+    command: "echo frontend placeholder"

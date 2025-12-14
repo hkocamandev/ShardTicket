@@ -1,0 +1,4 @@
+# Prometheus config placeholder
+global:
+  scrape_interval: 5s
+scrape_configs: []
