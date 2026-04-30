@@ -1,9 +1,86 @@
-version: '3.8'
+version: "3.9"
+
 services:
-  # Placeholder services — to be expanded later
+  shard1:
+    image: mongo:6.0
+    container_name: shard1
+    command: ["mongod", "--shardsvr", "--replSet", "shard1", "--port", "27018", "--bind_ip_all"]
+    volumes:
+      - shard1_data:/data/db
+
+  shard2:
+    image: mongo:6.0
+    container_name: shard2
+    command: ["mongod", "--shardsvr", "--replSet", "shard2", "--port", "27020", "--bind_ip_all"]
+    volumes:
+      - shard2_data:/data/db
+
+  configsvr:
+    image: mongo:6.0
+    container_name: configsvr
+    command: ["mongod", "--configsvr", "--replSet", "cfg", "--port", "27019", "--bind_ip_all"]
+    volumes:
+      - configsvr_data:/data/db
+
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  mongos:
+    image: mongo:6.0
+    container_name: mongos
+    depends_on:
+      - shard1
+      - shard2
+      - configsvr
+    command: >
+      mongos --configdb cfg/configsvr:27019
+             --bind_ip_all
+             --port 27017
+    ports:
+      - "27021:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      retries: 12
+
+  mongo-setup:
+    image: mongo:6.0
+    container_name: mongo-setup
+    depends_on:
+      - shard1
+      - shard2
+      - configsvr
+      - mongos
+      - mongo
+    volumes:
+      - ./mongo-init:/scripts
+    entrypoint: ["bash", "/scripts/setup.sh"]
+    restart: "no"
+
   backend:
-    image: node:18
-    command: "echo backend placeholder"
-  frontend:
-    image: node:18
-    command: "echo frontend placeholder"
+    build: ../backend
+    container_name: shard_backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    working_dir: /app
+    command: /bin/sh -c "sleep 10 && npm run dev"
+    env_file:
+      - ../backend/.env
+    volumes:
+      - ../backend:/app
+    depends_on:
+      mongos:
+        condition: service_healthy
+
+volumes:
+  mongo_data:
+  shard1_data:
+  shard2_data:
+  configsvr_data:

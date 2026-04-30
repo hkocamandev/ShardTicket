@@ -16,17 +16,29 @@ app.use(express.json());
 
 app.use('/tenants', tenantRoutes);
 app.use('/events', eventRoutes);
-app.use('/tenants/:tenantId/events/:eventId', ticketRoutes);
+app.use('/', ticketRoutes);
+app.use(
+  '/tenants/:tenantId/events/:eventId',
+  ticketRoutes
+);
+
 app.use('/admin', adminRoutes);
 app.use('/', demoRoutes);
 
 
 
-const PORT = process.env.PORT || 3000;
-if (!process.env.MONGO_URI) {
-  throw new Error('MONGO_URI is not defined');
+const USE_TRANSACTIONS = process.env.USE_TRANSACTIONS === 'true';
+
+const MONGO_URI = USE_TRANSACTIONS
+  ? process.env.MONGO_URI_SHARDED
+  : process.env.MONGO_URI_NONSHARDED;
+
+if (!MONGO_URI) {
+  throw new Error('Mongo URI not defined for current mode');
 }
-const MONGO_URI = process.env.MONGO_URI;
+
+console.log(`Mongo mode: ${USE_TRANSACTIONS ? 'SHARDED+TX' : 'NONSHARDED+NO-TX'}`);
+console.log(`Connecting to ${MONGO_URI}`);
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB connected'))
@@ -44,6 +56,8 @@ app.get('/metrics', async (req, res) => {
   res.end(await promClient.register.metrics());
 });
 
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server listening on ${PORT}`);
 });

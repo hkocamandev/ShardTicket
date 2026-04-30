@@ -1,13 +1,14 @@
+version: '3.8'
+
 services:
   mongo:
     image: mongo:6.0
     container_name: shard_mongo
-    restart: unless-stopped
     command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     ports:
       - "27017:27017"
     volumes:
-      - ./mongo-data:/data/db
+      - mongo_data:/data/db
 
   backend:
     build: ../backend
@@ -18,9 +19,12 @@ services:
     working_dir: /app
     command: ["npm", "run", "dev"]
     environment:
-      - MONGO_URI=mongodb://mongo:27017/ticketing
+      - MONGO_URI=mongodb://mongo:27017/ticketing?replicaSet=rs0
       - PORT=3000
     volumes:
       - ../backend:/app
     depends_on:
       - mongo
+
+volumes:
+  mongo_data:
