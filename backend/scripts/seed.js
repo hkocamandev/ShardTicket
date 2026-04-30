@@ -3,12 +3,27 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import Ticket from '../src/models/Ticket.js';
 
-dotenv.config();
+dotenv.config({ path: new URL('../.env', import.meta.url) });
+console.log("ENV MONGO_URI_SHARDED =", process.env.MONGO_URI_SHARDED);
 
-const uri = process.env.MONGO_URI || 'mongodb://localhost:27017/ticketing';
+
+const useTx = process.env.USE_TRANSACTIONS === 'true';
+const uri = useTx
+? process.env.MONGO_URI_SHARDED
+: process.env.MONGO_URI_NONSHARDED;
+console.log("Connecting to", uri);
+console.log("SEED USE_TRANSACTIONS =", process.env.USE_TRANSACTIONS);
+
+console.log("USE_TRANSACTIONS =", useTx);
+console.log("Resolved MONGO URI =", uri);
+
+
+console.log("Resolved MONGO URI =", uri);
+
 const MODE = process.env.SEED_MODE || 'multi'; // multi | hot
 
 async function seed() {
+  console.log(`Seeding mode = ${MODE}`);
   console.log('Connecting to', uri);
   await mongoose.connect(uri);
   console.log('Connected');

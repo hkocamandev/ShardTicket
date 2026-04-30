@@ -31,6 +31,8 @@ jspm_packages/
 .env
 .env.local
 .env.*.local
+.env.*.local.*
+env.*local.*
 
 # OS generated files
 .DS_Store
@@ -50,3 +52,13 @@ docker/mongo*
 # Build output
 dist/
 build/
+
+# k6 test output
+k6/results/
+
+# Claude Code
+CLAUDE.md
+.claude/
+
+# Local analysis docs (updated per branch, never pushed)
+BENCHMARK.md
