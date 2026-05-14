@@ -65,3 +65,6 @@ BENCHMARK.md
 
 # Local project plan (never committed)
 plan.md
+
+# Per-branch handoff notes (regenerated each branch, never committed)
+BRANCH_NOTES.txt

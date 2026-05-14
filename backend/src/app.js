@@ -1,17 +1,24 @@
 // backend/src/app.js
 import express from 'express';
 import mongoose from 'mongoose';
-import promClient from 'prom-client'
+import cors from 'cors';
 import dotenv from 'dotenv';
+import { register as metricsRegister } from './metrics/registry.js';
 import tenantRoutes from './routes/tenantRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import demoRoutes from './routes/demo.routes.js';
+import k6Routes from './routes/k6Routes.js';
 
-dotenv.config();
+// override: backend writes USE_TRANSACTIONS to .env at runtime;
+// the file is the source of truth, env_file (if any) only seeds defaults.
+dotenv.config({ override: true });
+
+const ADMIN_ORIGIN = process.env.ADMIN_ORIGIN || 'http://localhost:5173';
 
 const app = express();
+app.use(cors({ origin: ADMIN_ORIGIN }));
 app.use(express.json());
 
 app.use('/tenants', tenantRoutes);
@@ -23,6 +30,7 @@ app.use(
 );
 
 app.use('/admin', adminRoutes);
+app.use('/k6', k6Routes);
 app.use('/', demoRoutes);
 
 
@@ -48,12 +56,9 @@ app.get('/', (req, res) => {
   res.send('ShardTicket backend is running!');
 });
 
-// Prometheus metrics endpoint
-const collectDefaultMetrics = promClient.collectDefaultMetrics;
-collectDefaultMetrics();
 app.get('/metrics', async (req, res) => {
-  res.set('Content-Type', promClient.register.contentType);
-  res.end(await promClient.register.metrics());
+  res.set('Content-Type', metricsRegister.contentType);
+  res.end(await metricsRegister.metrics());
 });
 
 const PORT = process.env.PORT || 3000;

@@ -1,4 +1,16 @@
-# Prometheus config placeholder
 global:
   scrape_interval: 5s
-scrape_configs: []
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: shardticket-backend
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['backend:3000']
+        labels:
+          app: shardticket
+          component: backend
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
