@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+.env
+.env.*
+.git
+.gitignore
+*.log
+k6/results
+test
+*.test.js
+coverage

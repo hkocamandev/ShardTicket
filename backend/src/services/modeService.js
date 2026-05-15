@@ -1,7 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 
-const ENV_PATH = process.env.BACKEND_ENV_PATH || path.resolve(process.cwd(), '.env');
+function envPath() {
+  return process.env.BACKEND_ENV_PATH || path.resolve(process.cwd(), '.env');
+}
 
 export function readMode() {
   return process.env.USE_TRANSACTIONS === 'true' ? 'tx' : 'nontx';
@@ -13,10 +15,11 @@ export function writeMode(mode) {
     err.code = 'INVALID_MODE';
     throw err;
   }
+  const target = envPath();
   const value = mode === 'tx' ? 'true' : 'false';
   let content = '';
-  if (fs.existsSync(ENV_PATH)) {
-    content = fs.readFileSync(ENV_PATH, 'utf8');
+  if (fs.existsSync(target)) {
+    content = fs.readFileSync(target, 'utf8');
   }
 
   if (/^USE_TRANSACTIONS=.*$/m.test(content)) {
@@ -25,6 +28,6 @@ export function writeMode(mode) {
     content = content.replace(/\s*$/, '') + `\nUSE_TRANSACTIONS=${value}\n`;
   }
 
-  fs.writeFileSync(ENV_PATH, content);
-  return { mode, envPath: ENV_PATH };
+  fs.writeFileSync(target, content);
+  return { mode, envPath: target };
 }

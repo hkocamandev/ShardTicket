@@ -6,6 +6,9 @@ import {
   getLastResult,
   listScenarios,
 } from '../services/k6Runner.js';
+import { adminLimiter } from '../middleware/rateLimiters.js';
+import { validateBody } from '../validation/validate.js';
+import { k6RunBodySchema } from '../validation/k6Schemas.js';
 
 const router = express.Router();
 
@@ -13,9 +16,9 @@ router.get('/scenarios', (req, res) => {
   res.json({ scenarios: listScenarios() });
 });
 
-router.post('/run', (req, res) => {
+router.post('/run', adminLimiter, validateBody(k6RunBodySchema), (req, res) => {
   try {
-    const { scenario, vus, iterations, duration } = req.body || {};
+    const { scenario, vus, iterations, duration } = req.body;
     const result = startRun({ scenario, vus, iterations, duration });
     res.status(202).json(result);
   } catch (err) {
@@ -33,7 +36,7 @@ router.post('/run', (req, res) => {
   }
 });
 
-router.post('/stop', (req, res) => {
+router.post('/stop', adminLimiter, (req, res) => {
   try {
     res.json(stopRun());
   } catch (err) {
