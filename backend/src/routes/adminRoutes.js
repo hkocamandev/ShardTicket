@@ -6,6 +6,9 @@ import Ticket from '../models/Ticket.js';
 import Event from '../models/Event.js';
 import { readMode, writeMode } from '../services/modeService.js';
 import { runSeed, runPostSeedSharding, resetData } from '../services/seedRunner.js';
+import { adminLimiter } from '../middleware/rateLimiters.js';
+import { validateBody } from '../validation/validate.js';
+import { modeBodySchema, seedBodySchema } from '../validation/adminSchemas.js';
 
 const RESTART_TRIGGER_PATH =
   process.env.BACKEND_RESTART_TRIGGER ||
@@ -56,9 +59,9 @@ router.get('/mode', (req, res) => {
   res.json({ mode: readMode() });
 });
 
-router.post('/mode', (req, res) => {
+router.post('/mode', adminLimiter, validateBody(modeBodySchema), (req, res) => {
   try {
-    const { mode } = req.body || {};
+    const { mode } = req.body;
     const { mode: newMode, envPath } = writeMode(mode);
     res.status(202).json({
       mode: newMode,
@@ -87,9 +90,9 @@ router.post('/mode', (req, res) => {
   }
 });
 
-router.post('/seed', async (req, res) => {
+router.post('/seed', adminLimiter, validateBody(seedBodySchema), async (req, res) => {
   try {
-    const { mode = 'hot' } = req.body || {};
+    const { mode } = req.body;
     const result = await runSeed({ mode });
     res.json(result);
   } catch (err) {
@@ -107,7 +110,7 @@ router.post('/seed', async (req, res) => {
   }
 });
 
-router.post('/sharding/post-seed', async (req, res) => {
+router.post('/sharding/post-seed', adminLimiter, async (req, res) => {
   if (readMode() !== 'tx') {
     return res.status(409).json({
       error: 'mode_mismatch',
@@ -129,7 +132,7 @@ router.post('/sharding/post-seed', async (req, res) => {
   }
 });
 
-router.post('/reset', async (req, res) => {
+router.post('/reset', adminLimiter, async (req, res) => {
   try {
     const result = await resetData();
     res.json(result);

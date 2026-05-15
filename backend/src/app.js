@@ -2,6 +2,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { register as metricsRegister } from './metrics/registry.js';
 import tenantRoutes from './routes/tenantRoutes.js';
@@ -18,8 +19,10 @@ dotenv.config({ override: true });
 const ADMIN_ORIGIN = process.env.ADMIN_ORIGIN || 'http://localhost:5173';
 
 const app = express();
+// CSP off: backend serves JSON only — UI is a separate origin (Vite dev / Grafana iframe).
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({ origin: ADMIN_ORIGIN }));
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
 
 app.use('/tenants', tenantRoutes);
 app.use('/events', eventRoutes);
