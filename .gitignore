@@ -68,3 +68,7 @@ plan.md
 
 # Per-branch handoff notes (regenerated each branch, never committed)
 BRANCH_NOTES.txt
+
+# Personal learning notes (local-only, never committed)
+redis_info.txt
+global.txt

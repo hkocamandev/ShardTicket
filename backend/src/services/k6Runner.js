@@ -7,9 +7,10 @@ const RESULTS_DIR = process.env.K6_RESULTS_DIR || '/k6/results';
 const LOG_BUFFER_LINES = 200;
 
 const ALLOWED_SCENARIOS = {
-  hot_event:         { file: 'hot_event_test.js',         modes: ['tx'] },
-  hot_event_sharded: { file: 'hot_event_sharded_test.js', modes: ['tx'] },
-  non_transactional: { file: 'non_transactional_test.js', modes: ['nontx'] },
+  hot_event:            { file: 'hot_event_test.js',            modes: ['tx'] },
+  hot_event_sharded:    { file: 'hot_event_sharded_test.js',    modes: ['tx'] },
+  non_transactional:    { file: 'non_transactional_test.js',    modes: ['nontx'] },
+  admin_dashboard_load: { file: 'admin_dashboard_load_test.js', modes: ['tx', 'nontx'] },
 };
 
 const state = {

@@ -11,6 +11,7 @@ import ticketRoutes from './routes/ticketRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import demoRoutes from './routes/demo.routes.js';
 import k6Routes from './routes/k6Routes.js';
+import { getClient as getRedisClient } from './services/redisClient.js';
 
 // override: backend writes USE_TRANSACTIONS to .env at runtime;
 // the file is the source of truth, env_file (if any) only seeds defaults.
@@ -54,6 +55,11 @@ console.log(`Connecting to ${MONGO_URI}`);
 mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
+
+// Open Redis connection eagerly so flag toggles can flip cache/lock on
+// without waiting for first call. ioredis retries on its own if Redis is
+// down — cache.wrap / distributedLock guard via isReady().
+getRedisClient();
 
 app.get('/', (req, res) => {
   res.send('ShardTicket backend is running!');
