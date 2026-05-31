@@ -30,6 +30,24 @@ export interface ModeResponse {
   mode: AppMode;
 }
 
+export type FlagName = 'USE_REDIS_CACHE' | 'USE_REDIS_LOCK';
+
+export interface FlagsResponse {
+  USE_REDIS_CACHE: boolean;
+  USE_REDIS_LOCK: boolean;
+}
+
+export interface FlagSetResponse {
+  flag: FlagName;
+  value: boolean;
+  restartingInMs: number;
+}
+
+export interface RedisHealth {
+  ready: boolean;
+  pong: boolean;
+}
+
 export interface ScriptResult {
   ok?: boolean;
   output?: string;
@@ -60,4 +78,13 @@ export const adminApi = {
     apiClient.post<ScriptResult>('/admin/sharding/post-seed').then((r) => r.data),
   reset: () =>
     apiClient.post<ScriptResult>('/admin/reset').then((r) => r.data),
+
+  getFlags: () =>
+    apiClient.get<FlagsResponse>('/admin/flags').then((r) => r.data),
+  setFlag: (flag: FlagName, value: boolean) =>
+    apiClient
+      .post<FlagSetResponse>('/admin/flags', { flag, value })
+      .then((r) => r.data),
+  redisHealth: () =>
+    apiClient.get<RedisHealth>('/admin/redis/health').then((r) => r.data),
 };

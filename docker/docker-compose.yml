@@ -63,6 +63,21 @@ services:
     entrypoint: ["bash", "/scripts/setup.sh"]
     restart: "no"
 
+  redis:
+    image: redis:7-alpine
+    container_name: shard_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    # Cache + short-TTL lock store; no persistence needed (allkeys-lru evicts
+    # stale cache; locks expire via EX in seconds anyway). For "Redis as
+    # source of truth" later, switch to AOF.
+    command: ["redis-server", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 12
+
   backend:
     build: ../backend
     container_name: shard_backend
@@ -78,11 +93,17 @@ services:
     environment:
       - K6_SCENARIO_DIR=/k6/scenarios
       - K6_RESULTS_DIR=/k6/results
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - BUY_RATE_LIMIT=100000
+      - ADMIN_RATE_LIMIT=10000
     volumes:
       - ../backend:/app
       - ../k6:/k6
     depends_on:
       mongos:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   frontend:

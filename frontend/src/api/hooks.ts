@@ -35,6 +35,26 @@ export const useMode = () =>
     retryDelay: 1000,
   });
 
+// Same polling profile as useMode — flag toggles trigger a backend respawn,
+// so the UI needs to re-fetch quickly to reflect the new flag value once
+// the new process binds.
+export const useFlags = () =>
+  useQuery({
+    queryKey: ['admin', 'flags'],
+    queryFn: adminApi.getFlags,
+    refetchInterval: 1500,
+    retry: 10,
+    retryDelay: 1000,
+  });
+
+export const useRedisHealth = () =>
+  useQuery({
+    queryKey: ['admin', 'redis-health'],
+    queryFn: adminApi.redisHealth,
+    refetchInterval: POLL_MS,
+    retry: 3,
+  });
+
 export const useK6Scenarios = () =>
   useQuery({
     queryKey: ['k6', 'scenarios'],

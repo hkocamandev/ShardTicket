@@ -2,15 +2,19 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   useEvents,
+  useFlags,
   useMode,
+  useRedisHealth,
   useTicketsCount,
 } from '../api/hooks';
-import { adminApi, type AppMode, type SeedMode } from '../api/admin';
+import { adminApi, type AppMode, type FlagName, type SeedMode } from '../api/admin';
 
 export default function Dashboard() {
   const events = useEvents();
   const tickets = useTicketsCount();
   const mode = useMode();
+  const flags = useFlags();
+  const redisHealth = useRedisHealth();
   const queryClient = useQueryClient();
 
   const [restarting, setRestarting] = useState(false);
@@ -18,6 +22,9 @@ export default function Dashboard() {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const currentMode = mode.data?.mode;
+  const cacheOn = flags.data?.USE_REDIS_CACHE ?? false;
+  const lockOn = flags.data?.USE_REDIS_LOCK ?? false;
+  const redisReady = redisHealth.data?.ready ?? false;
 
   const setModeMutation = useMutation({
     mutationFn: (m: AppMode) => adminApi.setMode(m),
@@ -38,6 +45,33 @@ export default function Dashboard() {
       setLastAction(`Mode switched to ${observedMode.toUpperCase()}`);
     }
   }, [restarting, requestedMode, observedMode]);
+
+  const setFlagMutation = useMutation({
+    mutationFn: ({ flag, value }: { flag: FlagName; value: boolean }) =>
+      adminApi.setFlag(flag, value),
+    onSuccess: () => {
+      setRestarting(true);
+      setActionError(null);
+    },
+    onError: (err) => setActionError(extractError(err)),
+  });
+
+  // Same restart-watch pattern as mode: end the overlay once the polled flag
+  // value matches what we just asked for.
+  const requestedFlag = setFlagMutation.variables;
+  const observedCache = flags.data?.USE_REDIS_CACHE;
+  const observedLock = flags.data?.USE_REDIS_LOCK;
+  useEffect(() => {
+    if (!restarting || !requestedFlag) return;
+    const observed =
+      requestedFlag.flag === 'USE_REDIS_CACHE' ? observedCache : observedLock;
+    if (observed === requestedFlag.value) {
+      setRestarting(false);
+      setLastAction(
+        `${requestedFlag.flag.replace('USE_REDIS_', '').toLowerCase()} ${requestedFlag.value ? 'enabled' : 'disabled'}`,
+      );
+    }
+  }, [restarting, requestedFlag, observedCache, observedLock]);
 
   const seedMutation = useMutation({
     mutationFn: (m: SeedMode) => adminApi.seed(m),
@@ -75,7 +109,8 @@ export default function Dashboard() {
     seedMutation.isPending ||
     shardingMutation.isPending ||
     resetMutation.isPending ||
-    setModeMutation.isPending;
+    setModeMutation.isPending ||
+    setFlagMutation.isPending;
 
   const totalRemaining = events.data?.reduce((s, e) => s + e.remainingTickets, 0);
 
@@ -91,12 +126,19 @@ export default function Dashboard() {
       <ControlPanel
         currentMode={currentMode}
         loadingMode={mode.isLoading}
+        cacheOn={cacheOn}
+        lockOn={lockOn}
+        redisReady={redisReady}
+        loadingFlags={flags.isLoading}
         onSelectMode={(m) => {
           if (m === currentMode) return;
           const proceed = confirm(
             `Switch to ${m.toUpperCase()} mode? Backend will restart (~5–10s downtime).`,
           );
           if (proceed) setModeMutation.mutate(m);
+        }}
+        onToggleFlag={(flag, value) => {
+          setFlagMutation.mutate({ flag, value });
         }}
         onSeed={(m) => seedMutation.mutate(m)}
         onSharding={() => shardingMutation.mutate()}
@@ -199,7 +241,12 @@ export default function Dashboard() {
 function ControlPanel({
   currentMode,
   loadingMode,
+  cacheOn,
+  lockOn,
+  redisReady,
+  loadingFlags,
   onSelectMode,
+  onToggleFlag,
   onSeed,
   onSharding,
   onReset,
@@ -210,7 +257,12 @@ function ControlPanel({
 }: {
   currentMode: AppMode | undefined;
   loadingMode: boolean;
+  cacheOn: boolean;
+  lockOn: boolean;
+  redisReady: boolean;
+  loadingFlags: boolean;
   onSelectMode: (m: AppMode) => void;
+  onToggleFlag: (flag: FlagName, value: boolean) => void;
   onSeed: (m: SeedMode) => void;
   onSharding: () => void;
   onReset: () => void;
@@ -239,6 +291,30 @@ function ControlPanel({
               Non-TX (replica set)
             </ModeBtn>
           </div>
+        </ControlGroup>
+
+        <ControlGroup label="Redis">
+          <div className="flex flex-wrap gap-2">
+            <ModeBtn
+              active={cacheOn}
+              onClick={() => onToggleFlag('USE_REDIS_CACHE', !cacheOn)}
+              disabled={loadingFlags || anyBusy || !redisReady}
+            >
+              Cache: {cacheOn ? 'ON' : 'OFF'}
+            </ModeBtn>
+            <ModeBtn
+              active={lockOn}
+              onClick={() => onToggleFlag('USE_REDIS_LOCK', !lockOn)}
+              disabled={loadingFlags || anyBusy || !redisReady}
+            >
+              Lock: {lockOn ? 'ON' : 'OFF'}
+            </ModeBtn>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">
+            Cache wraps the admin GETs in cache-aside (5s TTL). Lock wraps the
+            non-TX buy in SET NX EX + Lua release to prevent ghost tickets.
+            {!redisReady && ' Redis unreachable — toggles disabled.'}
+          </p>
         </ControlGroup>
 
         <ControlGroup label="Data">
