@@ -78,6 +78,18 @@ services:
       interval: 5s
       retries: 12
 
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.62.0-alpine
+    container_name: shard_redis_exporter
+    restart: unless-stopped
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    ports:
+      - "9121:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+
   backend:
     build: ../backend
     container_name: shard_backend

@@ -131,8 +131,8 @@ describe('<Dashboard /> redis toggles', () => {
     });
   });
 
-  it('calls setFlag with USE_REDIS_LOCK=true when the Lock OFF button is clicked', async () => {
-    hookMocks.useMode.mockReturnValue({ data: { mode: 'tx' }, isLoading: false });
+  it('calls setFlag with USE_REDIS_LOCK=true when the Lock OFF button is clicked (nontx mode)', async () => {
+    hookMocks.useMode.mockReturnValue({ data: { mode: 'nontx' }, isLoading: false });
     renderDashboard();
     fireEvent.click(screen.getByRole('button', { name: /lock: off/i }));
     await waitFor(() => {
@@ -151,5 +151,27 @@ describe('<Dashboard /> redis toggles', () => {
     await waitFor(() => {
       expect(adminMocks.setFlag).toHaveBeenCalledWith('USE_REDIS_CACHE', false);
     });
+  });
+
+  it('disables Lock button when mode is tx (lock is irrelevant under transactions)', () => {
+    hookMocks.useMode.mockReturnValue({ data: { mode: 'tx' }, isLoading: false });
+    renderDashboard();
+    const lockBtn = screen.getByRole('button', { name: /lock: off/i });
+    expect(lockBtn).toBeDisabled();
+    expect(lockBtn.getAttribute('title')).toMatch(/TX modunda lock kullanılmaz/i);
+  });
+
+  it('keeps Lock button enabled when mode is nontx', () => {
+    hookMocks.useMode.mockReturnValue({ data: { mode: 'nontx' }, isLoading: false });
+    renderDashboard();
+    const lockBtn = screen.getByRole('button', { name: /lock: off/i });
+    expect(lockBtn).not.toBeDisabled();
+  });
+
+  it('keeps Cache button enabled in tx mode (cache is mode-independent)', () => {
+    hookMocks.useMode.mockReturnValue({ data: { mode: 'tx' }, isLoading: false });
+    renderDashboard();
+    const cacheBtn = screen.getByRole('button', { name: /cache: off/i });
+    expect(cacheBtn).not.toBeDisabled();
   });
 });
