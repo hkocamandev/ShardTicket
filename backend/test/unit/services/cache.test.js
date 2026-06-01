@@ -12,6 +12,10 @@ vi.mock('../../../src/services/redisClient.js', () => ({
 
 import { wrap, invalidate, KEY_GROUPS } from '../../../src/services/cache.js';
 import * as redisClient from '../../../src/services/redisClient.js';
+import {
+  register,
+  cacheLookupLatencyMs,
+} from '../../../src/metrics/registry.js';
 
 function makeFakeClient() {
   const store = new Map();
@@ -126,6 +130,35 @@ describe('cache.wrap', () => {
     expect(result).toEqual({ y: 2 });
     expect(loader).toHaveBeenCalledOnce();
     expect(client.set).toHaveBeenCalledOnce();
+  });
+
+  it('records cache_lookup_latency_ms with result=bypass when flag is off', async () => {
+    cacheLookupLatencyMs.reset();
+    process.env.USE_REDIS_CACHE = 'false';
+    await wrap(KEY_GROUPS.ADMIN_EVENTS, 'k', 5, async () => 1);
+    const text = await register.metrics();
+    expect(text).toMatch(
+      /cache_lookup_latency_ms_count\{[^}]*key_group="admin_events"[^}]*result="bypass"[^}]*\} 1/,
+    );
+  });
+
+  it('records cache_lookup_latency_ms with result=hit then miss across two calls', async () => {
+    cacheLookupLatencyMs.reset();
+    process.env.USE_REDIS_CACHE = 'true';
+    redisClient.isReady.mockReturnValue(true);
+    const client = makeFakeClient();
+    redisClient.getClient.mockReturnValue(client);
+
+    await wrap(KEY_GROUPS.ADMIN_TICKETS_COUNT, 'k2', 5, async () => ({ n: 1 }));
+    await wrap(KEY_GROUPS.ADMIN_TICKETS_COUNT, 'k2', 5, async () => ({ n: 1 }));
+
+    const text = await register.metrics();
+    expect(text).toMatch(
+      /cache_lookup_latency_ms_count\{[^}]*key_group="admin_tickets_count"[^}]*result="miss"[^}]*\} 1/,
+    );
+    expect(text).toMatch(
+      /cache_lookup_latency_ms_count\{[^}]*key_group="admin_tickets_count"[^}]*result="hit"[^}]*\} 1/,
+    );
   });
 });
 

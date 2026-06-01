@@ -305,14 +305,22 @@ function ControlPanel({
             <ModeBtn
               active={lockOn}
               onClick={() => onToggleFlag('USE_REDIS_LOCK', !lockOn)}
-              disabled={loadingFlags || anyBusy || !redisReady}
+              disabled={
+                loadingFlags || anyBusy || !redisReady || currentMode === 'tx'
+              }
+              title={
+                currentMode === 'tx'
+                  ? 'TX modunda lock kullanılmaz — buyTicket transaction zaten atomik.'
+                  : undefined
+              }
             >
               Lock: {lockOn ? 'ON' : 'OFF'}
             </ModeBtn>
           </div>
           <p className="mt-2 text-xs text-slate-500">
             Cache wraps the admin GETs in cache-aside (5s TTL). Lock wraps the
-            non-TX buy in SET NX EX + Lua release to prevent ghost tickets.
+            non-TX buy in SET NX EX + Lua release to prevent ghost tickets — TX
+            mode is already atomic, so lock toggle is disabled there.
             {!redisReady && ' Redis unreachable — toggles disabled.'}
           </p>
         </ControlGroup>
@@ -392,11 +400,13 @@ function ModeBtn({
   active,
   disabled,
   onClick,
+  title,
   children,
 }: {
   active: boolean;
   disabled?: boolean;
   onClick: () => void;
+  title?: string;
   children: ReactNode;
 }) {
   return (
@@ -404,6 +414,7 @@ function ModeBtn({
       type="button"
       onClick={onClick}
       disabled={disabled}
+      title={title}
       className={`rounded px-3 py-1.5 text-sm font-medium transition ${
         active
           ? 'bg-emerald-600 text-white'

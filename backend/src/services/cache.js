@@ -4,6 +4,8 @@ import {
   ticketCacheHitTotal,
   ticketCacheMissTotal,
   ticketCacheErrorTotal,
+  cacheLookupLatencyMs,
+  CACHE_RESULTS,
 } from '../metrics/registry.js';
 
 // Logical buckets used as the `key_group` Prometheus label so the Grafana
@@ -25,12 +27,23 @@ export const KEY_GROUPS = Object.freeze({
  *     (graceful degradation, ++error{op}).
  */
 export async function wrap(keyGroup, key, ttlSec, loader) {
+  const startMs = Date.now();
+  const observe = (result) =>
+    cacheLookupLatencyMs.observe(
+      { key_group: keyGroup, result },
+      Date.now() - startMs,
+    );
+
   if (!readFlag(FLAGS.USE_REDIS_CACHE)) {
-    return loader();
+    const value = await loader();
+    observe(CACHE_RESULTS.BYPASS);
+    return value;
   }
   if (!isReady()) {
     ticketCacheErrorTotal.inc({ key_group: keyGroup, op: 'unavailable' });
-    return loader();
+    const value = await loader();
+    observe(CACHE_RESULTS.ERROR);
+    return value;
   }
   const client = getClient();
   let raw;
@@ -38,12 +51,16 @@ export async function wrap(keyGroup, key, ttlSec, loader) {
     raw = await client.get(key);
   } catch (err) {
     ticketCacheErrorTotal.inc({ key_group: keyGroup, op: 'get' });
-    return loader();
+    const value = await loader();
+    observe(CACHE_RESULTS.ERROR);
+    return value;
   }
   if (raw !== null && raw !== undefined) {
     ticketCacheHitTotal.inc({ key_group: keyGroup });
     try {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      observe(CACHE_RESULTS.HIT);
+      return parsed;
     } catch {
       // poisoned cache value → treat as miss, overwrite
       ticketCacheErrorTotal.inc({ key_group: keyGroup, op: 'parse' });
@@ -56,6 +73,7 @@ export async function wrap(keyGroup, key, ttlSec, loader) {
   } catch (err) {
     ticketCacheErrorTotal.inc({ key_group: keyGroup, op: 'set' });
   }
+  observe(CACHE_RESULTS.MISS);
   return value;
 }
 

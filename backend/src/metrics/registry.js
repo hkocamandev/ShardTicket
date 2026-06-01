@@ -47,6 +47,20 @@ export const ticketCacheErrorTotal = new promClient.Counter({
   labelNames: ['key_group', 'op'],
 });
 
+export const cacheLookupLatencyMs = new promClient.Histogram({
+  name: 'cache_lookup_latency_ms',
+  help: 'End-to-end latency of a cache.wrap() call broken down by hit/miss/bypass',
+  labelNames: ['key_group', 'result'],
+  buckets: [1, 2, 5, 10, 25, 50, 100, 250, 500, 1000],
+});
+
+export const CACHE_RESULTS = Object.freeze({
+  HIT: 'hit',
+  MISS: 'miss',
+  BYPASS: 'bypass',
+  ERROR: 'error',
+});
+
 export const lockAcquireTotal = new promClient.Counter({
   name: 'lock_acquire_total',
   help: 'Distributed lock acquire attempts grouped by final result',
