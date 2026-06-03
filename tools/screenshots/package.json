@@ -1,0 +1,16 @@
+{
+  "name": "shardticket-screenshots",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Playwright capture harness for the ShardTicket admin panel — produces the README screenshots and GIFs in docs/screenshots/.",
+  "scripts": {
+    "shots": "node capture.mjs",
+    "postinstall": "playwright install chromium"
+  },
+  "dependencies": {
+    "gifenc": "^1.0.3",
+    "pngjs": "^7.0.0",
+    "playwright": "^1.49.0"
+  }
+}
