@@ -310,6 +310,15 @@ Known gaps and where the project could go next:
 - Tune the Mongoose **connection pool / server-selection timeouts** — high VU
   counts can exhaust the pool and surface as buffering timeouts.
 
+**Ticketing depth**
+- **Extend the sharded + transactional pattern to more collections** — today
+  the contention demo centers on `events` / `tickets`; the same shard-key and
+  `withTransaction` approach can drive `orders`, `payments`, `reservations`,
+  `seat_holds`, and `refunds` so a single buy spans several tables atomically.
+- **Build out a fuller ticketing domain** — seat maps, time-boxed holds,
+  waiting-room queues, per-tenant pricing tiers and promo codes — each a new
+  axis of concurrency and a new sharding case study.
+
 **Correctness & data**
 - **Event-driven cache invalidation** on writes instead of the current 5 s TTL,
   so admin reads are both fresh and cheap.
