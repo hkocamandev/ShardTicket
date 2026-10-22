@@ -136,7 +136,7 @@ services:
       - backend
 
   prometheus:
-    image: prom/prometheus:v2.54.1
+    image: prom/prometheus:v3.15.0
     container_name: shard_prometheus
     restart: unless-stopped
     ports:
