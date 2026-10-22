@@ -17,9 +17,9 @@
     "express": "^4.22.3",
     "express-rate-limit": "^7.5.1",
     "helmet": "^7.2.0",
-    "ioredis": "^5.4.1",
+    "ioredis": "^5.11.1",
     "mongoose": "^7.8.12",
-    "p-queue": "^9.0.1",
+    "p-queue": "^9.3.5",
     "prom-client": "^14.1.0",
     "uuid": "^11.1.1",
     "zod": "^3.25.76"
@@ -29,7 +29,7 @@
     "ioredis-mock": "^8.9.0",
     "mongodb-memory-server": "^11.3.0",
     "nodemon": "^3.1.14",
-    "supertest": "^7.2.2",
+    "supertest": "^7.3.1",
     "vitest": "^4.1.12"
   }
 }
