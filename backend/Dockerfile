@@ -1,4 +1,4 @@
-FROM grafana/k6:0.53.0 AS k6src
+FROM grafana/k6:0.59.0 AS k6src
 
 FROM node:18
 WORKDIR /app
