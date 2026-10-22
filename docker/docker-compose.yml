@@ -79,7 +79,7 @@ services:
       retries: 12
 
   redis-exporter:
-    image: oliver006/redis_exporter:v1.62.0-alpine
+    image: oliver006/redis_exporter:v1.94.0-alpine
     container_name: shard_redis_exporter
     restart: unless-stopped
     environment:
