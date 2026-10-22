@@ -119,7 +119,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: node:18
+    image: node:25
     container_name: shard_frontend
     restart: unless-stopped
     working_dir: /app
