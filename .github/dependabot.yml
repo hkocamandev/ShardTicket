@@ -1,0 +1,18 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directories:
+      - /backend
+      - /frontend
+      - /tools/screenshots
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+  - package-ecosystem: docker
+    directory: /backend
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker-compose
+    directory: /docker
+    schedule:
+      interval: weekly
