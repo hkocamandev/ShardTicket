@@ -11,25 +11,25 @@
     "test:watch": "NODE_ENV=test vitest"
   },
   "dependencies": {
-    "axios": "^1.13.2",
+    "axios": "^1.20.0",
     "cors": "^2.8.6",
     "dotenv": "^16.3.1",
-    "express": "^4.18.2",
+    "express": "^4.22.3",
     "express-rate-limit": "^7.5.1",
     "helmet": "^7.2.0",
     "ioredis": "^5.4.1",
-    "mongoose": "^7.3.1",
+    "mongoose": "^7.8.12",
     "p-queue": "^9.0.1",
     "prom-client": "^14.1.0",
-    "uuid": "^9.0.0",
+    "uuid": "^11.1.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^4.1.6",
+    "@vitest/coverage-v8": "^4.1.12",
     "ioredis-mock": "^8.9.0",
     "mongodb-memory-server": "^11.1.0",
     "nodemon": "^3.1.14",
     "supertest": "^7.2.2",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.12"
   }
 }
