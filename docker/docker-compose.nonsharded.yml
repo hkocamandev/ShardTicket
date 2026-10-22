@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   mongo:
-    image: mongo:6.0
+    image: mongo:9.0
     container_name: shard_mongo
     command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     ports:

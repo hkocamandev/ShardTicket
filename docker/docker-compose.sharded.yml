@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   shard1:
-    image: mongo:6.0
+    image: mongo:9.0
     container_name: shard1
     command: ["mongod", "--shardsvr", "--replSet", "shard1", "--port", "27018"]
     ports:
@@ -11,7 +11,7 @@ services:
       - shard1_data:/data/db
 
   shard2:
-    image: mongo:6.0
+    image: mongo:9.0
     container_name: shard2
     command: ["mongod", "--shardsvr", "--replSet", "shard2", "--port", "27020"]
     ports:
@@ -20,7 +20,7 @@ services:
       - shard2_data:/data/db
 
   configsvr:
-    image: mongo:6.0
+    image: mongo:9.0
     container_name: configsvr
     command: ["mongod", "--configsvr", "--replSet", "cfg", "--port", "27019"]
     ports:
@@ -29,7 +29,7 @@ services:
       - configsvr_data:/data/db
 
   mongos:
-    image: mongo:6.0
+    image: mongo:9.0
     container_name: mongos
     depends_on:
       - shard1

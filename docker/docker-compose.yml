@@ -2,28 +2,28 @@ version: "3.9"
 
 services:
   shard1:
-    image: mongo:6.0
+    image: mongo:9.0
     container_name: shard1
     command: ["mongod", "--shardsvr", "--replSet", "shard1", "--port", "27018", "--bind_ip_all"]
     volumes:
       - shard1_data:/data/db
 
   shard2:
-    image: mongo:6.0
+    image: mongo:9.0
     container_name: shard2
     command: ["mongod", "--shardsvr", "--replSet", "shard2", "--port", "27020", "--bind_ip_all"]
     volumes:
       - shard2_data:/data/db
 
   configsvr:
-    image: mongo:6.0
+    image: mongo:9.0
     container_name: configsvr
     command: ["mongod", "--configsvr", "--replSet", "cfg", "--port", "27019", "--bind_ip_all"]
     volumes:
       - configsvr_data:/data/db
 
   mongo:
-    image: mongo:6.0
+    image: mongo:9.0
     container_name: mongo
     command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     ports:
@@ -32,7 +32,7 @@ services:
       - mongo_data:/data/db
 
   mongos:
-    image: mongo:6.0
+    image: mongo:9.0
     container_name: mongos
     depends_on:
       - shard1
@@ -50,7 +50,7 @@ services:
       retries: 12
 
   mongo-setup:
-    image: mongo:6.0
+    image: mongo:9.0
     container_name: mongo-setup
     depends_on:
       - shard1
