@@ -18,7 +18,7 @@
     "express-rate-limit": "^7.5.1",
     "helmet": "^7.2.0",
     "ioredis": "^5.11.1",
-    "mongoose": "^7.8.12",
+    "mongoose": "^7.8.13",
     "p-queue": "^9.3.5",
     "prom-client": "^14.1.0",
     "uuid": "^11.1.1",
